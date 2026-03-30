@@ -1,15 +1,20 @@
-first make sure to have gemini api key in you bashrc
+# Prerequisite
+
+- node
+- npm
+- npx
+- `GEMINI_API_KEY` environment variable
 
 ```sh
 GEMINI_API_KEY='<your api key>'
 ```
 
-to convert to binary using node
+# Convertion to executable
 
 ```sh
-# Install a fast bundler temporarily
+npm i
+
 npx esbuild index.js --bundle --platform=node --outfile=dist/bundle.js
 
-# This downloads pkg temporarily and compiles your bundle
-npx pkg dist/bundle.js --target node18-linux-x64 --output gemini-app
+npx @yao-pkg/pkg dist/bundle.js --target node20-linux-x64 --output gemini-app
 ```
