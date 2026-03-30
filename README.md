@@ -11,5 +11,5 @@ to convert to binary using node
 npx esbuild index.js --bundle --platform=node --outfile=dist/bundle.js
 
 # This downloads pkg temporarily and compiles your bundle
-npx pkg dist/bundle.js --target node18-linux-static-x64 --output gemini_cli
+npx pkg dist/bundle.js --target node18-linux-x64 --output gemini-app
 ```
