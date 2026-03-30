@@ -12,5 +12,8 @@
   "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.24.1"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
   }
 }

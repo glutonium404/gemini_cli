@@ -11,6 +11,11 @@ if (!question) {
     process.exit(1);
 }
 
+if (!process.env.GEMINI_API_KEY) {
+    console.error("No env variable named \"GEMINI_API_KEY\"");
+    process.exit(1);
+}
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
