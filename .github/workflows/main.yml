@@ -1,0 +1,38 @@
+name: Build and Release Binary
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Bundle with esbuild
+        run: npx esbuild index.js --bundle --platform=node --outfile=dist/bundle.js
+
+      - name: Package to Binary
+        run: npx @yao-pkg/pkg dist/bundle.js --target node20-linux-x64 --output gemini-app
+
+      - name: Create Release and Upload Binary
+        uses: softprops/action-gh-release@v1
+        with:
+          files: gemini-app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
