@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const instruction = "keep the ans short and concise withing 3 to 5 lines if possible, if needed write more. do not format the text. just use plain text. just ans the question, do not add extra text, do as told and keep it at that only. Here is my question: \n\n";
+const instructions = {
+    short: "instruction: keep the ans short and concise withing 3 to 5 lines if possible, if needed write more. just give me the reponse directly and do not add any extra text\n",
+    plainFormat: "instruction: i am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text.\n",
+}
 
 if (!process.env.GEMINI_API_KEY) {
     console.error("No env variable named \"GEMINI_API_KEY\"");
     process.exit(1);
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-const model = genAI.getGenerativeModel({
-    model: "gemini-3.1-flash-lite-preview"
-});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const fallbackModel = "gemini-3-flash-preview";
+const mainModel = "gemini-3.1-flash-lite-preview";
+let checkingFallback = false;
 
 async function readStdin() {
     if (process.stdin.isTTY) {
@@ -31,27 +33,48 @@ async function main() {
     const pipedInput = await readStdin();
 
     const args = process.argv.slice(2);
-
-    const hasNoInstructionFlag = args.includes("-i");
-
-    const userPrompt = args.filter(arg => arg !== "-i").join(" ");
+    let userPrompt = args.filter(arg => arg !== "-i").join(" ");
 
     if (!userPrompt && !pipedInput) {
         console.error("Usage: gemini [-i] [prompt]");
         process.exit(1);
     }
 
+    if (!args.includes("-l")) { // ask for long form response
+        userPrompt = instructions.short + userPrompt;
+    } else {
+        userPrompt = userPrompt.replace("-l", "");
+    }
+    if (!args.includes("-m")) { // ask for markdown response
+        userPrompt = instructions.plainFormat + userPrompt;
+    } else {
+        userPrompt = userPrompt.replace("-m", "");
+    }
+
     const finalPrompt = pipedInput
-        ? `CONTEXT DATA:\n\`\`\`\n${pipedInput}\n\`\`\`\n\nUSER QUESTION: ${userPrompt}`
+        ? `CONTEXT DATA:\n\`\`\`\n${pipedInput}\n\`\`\`\n\nUSER QUESTION:\n\n ${userPrompt}`
         : userPrompt;
 
-    try {
-        const fullContent = hasNoInstructionFlag ? finalPrompt : instruction + finalPrompt;
+    makeCall(finalPrompt);
+}
 
-        const result = await model.generateContent(fullContent);
-        console.log(result.response.text());
+async function makeCall(finalPrompt) {
+
+    try {
+        const result = await ai.models.generateContent({
+            model: checkingFallback ? fallbackModel : mainModel,
+            contents: finalPrompt,
+        })
+
+        console.log(result.text);
     } catch (error) {
-        console.error("Error:", error.message);
+        if (!checkingFallback) {
+            console.warn("[WARNING]\tMain modle failed. Checking fallback.......");
+            checkingFallback = true;
+            main(fullContent);
+        } else {
+            console.error("Error:", error.message);
+        }
     }
 }
 
