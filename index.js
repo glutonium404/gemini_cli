@@ -3,7 +3,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 const instructions = {
-    short: "instruction: keep the ans short and concise withing 3 to 5 lines if possible, if needed write more. just give me the reponse directly and do not add any extra text\n",
+    short: "instruction: keep the ans short and concise within 3 to 5 lines if possible, if needed write more. just give me the response directly and do not add any extra text\n",
     plainFormat: "instruction: i am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text.\n",
 }
 
@@ -13,8 +13,8 @@ if (!process.env.GEMINI_API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const fallbackModel = "gemini-3-flash-preview";
-const mainModel = "gemini-3.1-flash-lite-preview";
+const mainModel = "gemini-3.1-flash-lite";
+const fallbackModel = "gemini-3.1-flash-lite-preview";
 let checkingFallback = false;
 
 async function readStdin() {
@@ -33,47 +33,59 @@ async function main() {
     const pipedInput = await readStdin();
 
     const args = process.argv.slice(2);
-    let userPrompt = args.filter(arg => arg !== "-i").join(" ");
+
+    // Safely extract flags
+    const hasLongFlag = args.includes("-l");
+    const hasMarkdownFlag = args.includes("-m");
+
+    // Filter out all known flags before joining the user prompt
+    const promptArgs = args.filter(arg => !['-i', '-l', '-m'].includes(arg));
+    const userPrompt = promptArgs.join(" ");
 
     if (!userPrompt && !pipedInput) {
-        console.error("Usage: gemini [-i] [prompt]");
+        console.error("Usage: gemini [-i] [-l] [-m] [prompt]");
         process.exit(1);
     }
 
-    if (!args.includes("-l")) { // ask for long form response
-        userPrompt = instructions.short + userPrompt;
-    } else {
-        userPrompt = userPrompt.replace("-l", "");
+    // Prepend instructions based on the flags
+    let activeInstructions = "";
+    if (!hasLongFlag) { // If no -l flag, ask for short
+        activeInstructions += instructions.short;
     }
-    if (!args.includes("-m")) { // ask for markdown response
-        userPrompt = instructions.plainFormat + userPrompt;
-    } else {
-        userPrompt = userPrompt.replace("-m", "");
+    if (!hasMarkdownFlag) { // If no -m flag, ask for plain text
+        activeInstructions += instructions.plainFormat;
     }
 
+    const combinedPrompt = activeInstructions + userPrompt;
+
     const finalPrompt = pipedInput
-        ? `CONTEXT DATA:\n\`\`\`\n${pipedInput}\n\`\`\`\n\nUSER QUESTION:\n\n ${userPrompt}`
-        : userPrompt;
+        ? `CONTEXT DATA:\n\`\`\`\n${pipedInput}\n\`\`\`\n\nUSER QUESTION:\n\n ${combinedPrompt}`
+        : combinedPrompt;
 
     makeCall(finalPrompt);
 }
 
 async function makeCall(finalPrompt) {
-
     try {
         const result = await ai.models.generateContent({
             model: checkingFallback ? fallbackModel : mainModel,
             contents: finalPrompt,
         })
 
-        console.log(result.text);
+        // Better for terminal piping than console.log
+        process.stdout.write(result.text + '\n');
+
     } catch (error) {
         if (!checkingFallback) {
-            console.warn("[WARNING]\tMain modle failed. Checking fallback.......");
+            console.warn("[WARNING]\tMain model failed. Checking fallback.......");
+            console.error("[ERROR]\t" + error + "\n\n");
             checkingFallback = true;
-            main(fullContent);
+
+            // Fix: Call makeCall again with the preserved prompt, NOT main()
+            await makeCall(finalPrompt);
         } else {
             console.error("Error:", error.message);
+            process.exit(1); // Exit with error code so piped commands know it failed
         }
     }
 }
