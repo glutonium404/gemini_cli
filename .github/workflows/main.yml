@@ -27,12 +27,16 @@ jobs:
       - name: Bundle with esbuild
         run: npx esbuild index.js --bundle --platform=node --outfile=dist/bundle.js
 
-      - name: Package to Binary
-        run: npx @yao-pkg/pkg dist/bundle.js --target node20-linux-x64 --output gemini-app
+      - name: Package to Binaries (Linux & Windows)
+        run: |
+          npx @yao-pkg/pkg dist/bundle.js --target node20-linux-x64 --output gemini-app-linux
+          npx @yao-pkg/pkg dist/bundle.js --target node20-win-x64 --output gemini-app-win.exe
 
-      - name: Create Release and Upload Binary
-        uses: softprops/action-gh-release@v1
+      - name: Create Release and Upload Binaries
+        uses: softprops/action-gh-release@v2
         with:
-          files: gemini-app
+          files: |
+            gemini-app-linux
+            gemini-app-win.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
