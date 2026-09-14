@@ -10,6 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    strategy:
+      matrix:
+        include:
+          - target: node20-linux-x64
+            output: gemini-app-linux-x64
+          - target: node20-win-x64
+            output: gemini-app-win-x64.exe
 
     steps:
       - name: Checkout code
@@ -28,11 +35,11 @@ jobs:
         run: npx esbuild index.js --bundle --platform=node --outfile=dist/bundle.js
 
       - name: Package to Binary
-        run: npx @yao-pkg/pkg dist/bundle.js --target node20-linux-x64 --output gemini-app
+        run: npx @yao-pkg/pkg dist/bundle.js --target ${{ matrix.target }} --output ${{ matrix.output }}
 
       - name: Create Release and Upload Binary
         uses: softprops/action-gh-release@v1
         with:
-          files: gemini-app
+          files: ${{ matrix.output }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
