@@ -134,7 +134,7 @@ std::pair<bool, std::string> make_request(const std::string request_body) {
     cli.set_read_timeout(15, 0);
 
     const std::string API_KEY = std::getenv("GEMINI_API_KEY");
-    const std::string path = "/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+    const std::string path = "/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=" + API_KEY;
 
     auto res = cli.Post(path.c_str(), request_body, "application/json");
 
