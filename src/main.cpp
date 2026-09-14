@@ -1,9 +1,10 @@
 #include <cstdlib>
+#include <exception>
 #include <iostream>
-#include <optional>
-#include <stdexcept>
 #include <string>
+#include <utility>
 #include "json.hpp"
+#include "httplib.h"
 #include "utils.hpp"
 
 #if defined(_WIN32)
@@ -13,22 +14,6 @@
 #endif
 
 using json = nlohmann::json;
-
-void assert_api_key() {
-    char* API_KEY = std::getenv("GEMINI_API_KEY");
-
-    if(!API_KEY) {
-        throw std::runtime_error("GEMINI_API_KEY not set");
-        exit(-1);
-    }
-}
-
-void assert_prompt(int argc) {
-    if(argc <= 1) {
-        std::cout << "Prompt not provided." << std::endl;
-        exit(-1);
-    }
-}
 
 bool is_piped_data() {
 #if defined(_WIN32)
@@ -51,7 +36,7 @@ std::string get_formatted_piped_data() {
     return "CONTEXT DATA:\n```\n" + data + "\n```";
 }
 
-std::string get_final_prompt(int argc, char* argv[]) {
+std::string get_final_prompt(const int argc, const char* const argv[]) {
     bool is_long = false;
     bool is_markdown = false;
 
@@ -84,15 +69,105 @@ std::string get_final_prompt(int argc, char* argv[]) {
     return prompt + get_formatted_piped_data();
 }
 
+/**
+ * @param final_prompt std::string
+* {
+*   "contents": [
+*     {
+*       "parts": [
+*         {
+*           "text": final_prompt
+*         }
+*       ]
+*     }
+*   ]
+* }
+*/
+std::string get_request_body(const std::string final_prompt) {
+    json payload;
+
+    payload["contents"] = json::array({ // <-------------- array initializer list
+        { // <-------------------------------------------- the array itsel
+            { // <---------------------------------------- the array item , i.e object
+                "parts", // <----------------------------- key value pair
+                json::array({ // <------------------------ the initializer object
+                    { // <-------------------------------- the array itself
+                        { "text", final_prompt }
+                    }
+                })
+            }
+        }
+    });
+
+    return payload.dump();
+}
+// {
+//   "candidates": [
+//     {
+//       "content": {
+//         "parts": [
+//           {
+//             "text": "Generated response string"
+//           }
+//         ]
+//       }
+//     }
+//   ]
+// }
+std::string parse_json_response(const std::string res_body) {
+    std::string response = "";
+
+    try {
+        json response_json = json::parse(res_body);
+        response = response_json["candidates"][0]["content"]["parts"][0]["text"];
+    } catch (const std::exception& e) {
+        std::cerr << "JSON Parsing error: " << e.what() << std::endl;
+    }
+
+    return response;
+}
+
+std::pair<bool, std::string> make_request(const std::string request_body) {
+    httplib::Client cli("https://generativelanguage.googleapis.com");
+
+    // 30s timeout
+    cli.set_read_timeout(15, 0);
+
+    const std::string API_KEY = std::getenv("GEMINI_API_KEY");
+    const std::string path = "/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
+
+    auto res = cli.Post(path.c_str(), request_body, "application/json");
+
+    if (!res) {
+        std::cerr << "Network error: Request failed to send." << std::endl;
+        return std::pair(false, "");
+    }
+
+    if (res->status != 200) {
+        std::cerr << "HTTP Error " << res->status << ": " << res->body << std::endl;
+        return std::pair(false, "");
+    }
+
+    return std::pair(true, parse_json_response(res->body));
+}
+
 int main(int argc, char* argv[]) {
 
-    if(!is_piped_data()) assert_prompt(argc);
+    if(!is_piped_data()) Utils::assert_prompt(argc);
 
-    assert_api_key();
+    Utils::assert_api_key();
 
-    std::string final_prompt = get_final_prompt(argc, argv);
+    auto response = make_request(
+        get_request_body(
+            get_final_prompt(argc, argv)
+        )
+    );
 
-    std::cout << final_prompt << std::endl;
+    if (response.first) {
+        std::cout << response.second << std::endl;
+    }else {
+        std::cout << "Something went wrong :'(" << std::endl;
+    }
 
     return 0;
 }
