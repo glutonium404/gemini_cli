@@ -53,6 +53,22 @@ public:
                     continue;
                 }
 
+                if(check_flag_h(argv[i])) {
+                    std::cout
+                        << "gemini_cli - terminal client for Gemini API\n\n"
+                        << "Usage:\n"
+                        << "  gemini_cli [options] <prompt>\n"
+                        << "  echo \"context\" | gemini_cli [options] <prompt>\n\n"
+                        << "Options:\n"
+                        << "  -h, --help      Show this help message and exit\n"
+                        << "  -l, --long      Allow longer responses (disable short response instruction)\n"
+                        << "  -m, --markdown  Enable markdown output (disable plain-text instruction)\n\n"
+                        << "Notes:\n"
+                        << "  - Set GEMINI_API_KEY in your environment before running.\n"
+                        << "  - Piped stdin is added as context data to the prompt.\n";
+                    std::exit(0);
+                }
+
                 prompt += argv[i];
                 prompt += " ";
             }
@@ -81,6 +97,10 @@ private:
 
     inline bool check_flag_m(const char* arg) const {
         return strcmp(arg, "-m") == 0 || strcmp(arg, "--markdown") == 0;
+    }
+
+    inline bool check_flag_h(const char* arg) const {
+        return strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0;
     }
 
     inline void assert_prompt(const int argc) const {
