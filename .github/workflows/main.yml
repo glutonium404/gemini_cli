@@ -1,42 +1,59 @@
-name: Build and Release Binary
+name: Cross-Platform C++ Release
 
 on:
   push:
+    branches:
+      - cpp_migration
     tags:
       - 'v*'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-and-release:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: write
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary_path: build/gemini_cli
+            asset_name: gemini_cli-linux-amd64
+          - os: macos-latest
+            binary_path: build/gemini_cli
+            asset_name: gemini_cli-macos-arm64
+          - os: windows-latest
+            binary_path: build/Release/gemini_cli.exe
+            asset_name: gemini_cli-windows-amd64.exe
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          ref: cpp_migration
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Bundle with esbuild
-        run: npx esbuild index.js --bundle --platform=node --outfile=dist/bundle.js
-
-      - name: Package to Binaries (Linux & Windows)
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
         run: |
-          npx @yao-pkg/pkg dist/bundle.js --target node20-linux-x64 --output gemini-app-linux
-          npx @yao-pkg/pkg dist/bundle.js --target node20-win-x64 --output gemini-app-win.exe
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev cmake build-essential
 
-      - name: Create Release and Upload Binaries
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build project
+        run: cmake --build build --config Release
+
+      - name: Rename binary for release asset
+        shell: bash
+        run: |
+          mkdir -p release_assets
+          cp ${{ matrix.binary_path }} release_assets/${{ matrix.asset_name }}
+
+      - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: |
-            gemini-app-linux
-            gemini-app-win.exe
+          files: release_assets/${{ matrix.asset_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
