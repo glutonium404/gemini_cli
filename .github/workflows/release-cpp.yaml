@@ -1,4 +1,4 @@
-name: Release C++ CLI (multi-platform)
+name: Release C++ CLI (Linux & Windows)
 
 # Triggers on tags like "cpp-v1.0.0". Using a distinct "cpp-v*" prefix
 # (instead of plain "v*") keeps this from colliding with the existing
@@ -35,6 +35,96 @@ jobs:
     name: Build (${{ matrix.os }})
     needs: verify-branch
     runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: gemini_cli
+            asset_name: gemini_cli-linux-x64
+          - os: windows-latest
+            artifact_name: gemini_cli.exe
+            asset_name: gemini_cli-windows-x64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ---------- Linux ----------
+      - name: Install deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev
+
+      - name: Configure & build (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release -j
+
+      # ---------- Windows ----------
+      - name: Install deps (Windows, vcpkg)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          vcpkg install openssl:x64-windows
+
+      - name: Configure & build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
+          cmake --build build --config Release
+
+      # ---------- Package ----------
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist
+          cp build/${{ matrix.artifact_name }} dist/
+          tar -czf ${{ matrix.asset_name }}.tar.gz -C dist ${{ matrix.artifact_name }}
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "build/Release/${{ matrix.artifact_name }}" "dist/${{ matrix.artifact_name }}"
+          Compress-Archive -Path "dist/${{ matrix.artifact_name }}" -DestinationPath "${{ matrix.asset_name }}.zip"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: |
+            ${{ matrix.asset_name }}.tar.gz
+            ${{ matrix.asset_name }}.zip
+          if-no-files-found: ignore
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten artifact files
+        run: |
+          mkdir -p release-files
+          find artifacts -type f \( -name '*.tar.gz' -o -name '*.zip' \) -exec cp {} release-files/ \;
+          ls -la release-files
+
+      - name: Create Release and Upload Binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-files/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
