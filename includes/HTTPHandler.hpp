@@ -44,8 +44,8 @@ public:
     static std::pair<bool, std::string> send_post_request(const std::string& request_body) {
 
         std::string models[] = {
-            "gemini-3.1-flash-lite-preview",
             "gemini-3-flash-preview",
+            "gemini-3.1-flash-lite-preview",
             "gemini-2.5-flash",
         };
 

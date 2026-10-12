@@ -87,9 +87,9 @@ private:
     const int argc;
     const char* const* argv;
 
-    std::string short_res = "USER INSTRUCTION:\nkeep the ans short and concise withing 15 to 20 lines if possible, if needed write more. just give me the reponse directly and do not add any extra text\n\n";
+    std::string short_res = "user instruction:\nkeep the ans short and concise withing 15 to 20 lines if possible, write more if needed.\n\n";
 
-    std::string plain_format = "USER INSTRUCTION:\ni am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text.\n\n";
+    std::string plain_format = "user instruction:\ni am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text. you are allowed to use nerd fonts to beautify\n\n";
 
     inline bool check_flag_l(const char* arg) const {
         return std::strcmp(arg, "-l") == 0 || strcmp(arg, "--long") == 0;
