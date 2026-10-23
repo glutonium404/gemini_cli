@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cstdio>
-#include <cstring>
+#include "FlagHandler.hpp"
 #include <iostream>
 #include <string>
+#include <vector>
 
 #if defined(_WIN32)
 #include <io.h>
@@ -13,12 +13,13 @@
 
 class InputHandler {
 public:
-    InputHandler(const int argc, const char* const* argv)
-    : argc(argc), argv(argv)
-    {
-        if(!is_piped_data()) { // if no piped data then some soft of argument must be provided
-            assert_prompt(argc);
-        }else {
+    struct ParsedInput {
+        std::string prompt;
+        std::vector<std::string> instructions;
+    };
+public:
+    InputHandler() {
+        if(is_piped_data()) { // if no piped data then some soft of argument must be provided
             std::string line;
             while (std::getline(std::cin, line)) {
                 piped_data_cache += line + "\n";
@@ -26,88 +27,52 @@ public:
         }
     }
 
-    std::string get_piped_data(bool formatted = false) const {
-        if (piped_data_cache.empty()) return "";
-        if (formatted)
-            return "CONTEXT DATA:\n```\n" + piped_data_cache + "\n```";
-        return piped_data_cache;
-    }
+    ParsedInput parse_input(const std::vector<std::string_view>& args, const Flags& flags) const {
 
-    std::string build_final_prompt() const {
-        bool is_long = false;
-        bool is_markdown = false;
+        if(piped_data_cache.empty())
+            assert_prompt(args.empty());
 
-        std::string prompt = "";
+        std::string prompt = "USER QUERY:\n\n";
+        std::vector<std::string> instructions;
 
-        if(argc > 1) {
-            prompt = "USER QUERY:\n";
-
-            for(int i=1; i<argc; i++) {
-                if(!is_long && check_flag_l(argv[i])) {
-                    is_long = true;
-                    continue;
-                }
-
-                if(!is_markdown && check_flag_m(argv[i])) {
-                    is_markdown = true;
-                    continue;
-                }
-
-                if(check_flag_h(argv[i])) {
-                    std::cout
-                        << "gemini_cli - terminal client for Gemini API\n\n"
-                        << "Usage:\n"
-                        << "  gemini_cli [options] <prompt>\n"
-                        << "  echo \"context\" | gemini_cli [options] <prompt>\n\n"
-                        << "Options:\n"
-                        << "  -h, --help      Show this help message and exit\n"
-                        << "  -l, --long      Allow longer responses (disable short response instruction)\n"
-                        << "  -m, --markdown  Enable markdown output (disable plain-text instruction)\n\n"
-                        << "Notes:\n"
-                        << "  - Set GEMINI_API_KEY in your environment before running.\n"
-                        << "  - Piped stdin is added as context data to the prompt.\n";
-                    std::exit(0);
-                }
-
-                prompt += argv[i];
-                prompt += " ";
-            }
-
-            prompt += "\n\n";
+        for(std::string_view arg : args) {
+            prompt += arg;
+            prompt += " ";
         }
 
-        if(!is_long)        prompt = std::string(short_res)    + prompt;
-        if(!is_markdown)    prompt = std::string(plain_format) + prompt;
+        prompt += "\n\n";
 
-        return prompt + get_piped_data(true);
+        if(!flags.long_res) instructions.push_back(inst_short_res)   ;
+        if(!flags.markdown) instructions.push_back(inst_plain_format);
+        if( flags.ansii)    instructions.push_back(inst_ansii);
+
+        return {
+            .prompt       = prompt + get_piped_data(true),
+            .instructions = instructions
+        };
     }
 
 private:
     std::string piped_data_cache = "";
-    const int argc;
-    const char* const* argv;
 
-    std::string short_res = "user instruction:\nkeep the ans short and concise withing 15 to 20 lines if possible, write more if needed.\n\n";
+    std::string inst_short_res = "keep the ans short and concise withing 15 to 20 lines if possible, write more if needed.";
 
-    std::string plain_format = "user instruction:\ni am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text. you are allowed to use nerd fonts to beautify\n\n";
+    std::string inst_plain_format = "i am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text. you are allowed to use nerd fonts to beautify";
 
-    inline bool check_flag_l(const char* arg) const {
-        return std::strcmp(arg, "-l") == 0 || strcmp(arg, "--long") == 0;
-    }
+    std::string inst_ansii = "i am on terminal. so you can use ansii escape codes to color and format texts. so do use that";
 
-    inline bool check_flag_m(const char* arg) const {
-        return strcmp(arg, "-m") == 0 || strcmp(arg, "--markdown") == 0;
-    }
-
-    inline bool check_flag_h(const char* arg) const {
-        return strcmp(arg, "-h") == 0 || strcmp(arg, "--help") == 0;
-    }
-
-    inline void assert_prompt(const int argc) const {
-        if(argc <= 1) {
+    inline void assert_prompt(bool is_empty) const {
+        if(is_empty) {
             std::cerr << "Prompt not provided." << std::endl;
             exit(-1);
         }
+    }
+
+    std::string get_piped_data(bool format = false) const {
+        if (piped_data_cache.empty()) return "";
+        if (format)
+            return "CONTEXT DATA:\n```\n" + piped_data_cache + "\n```";
+        return piped_data_cache;
     }
 
     bool is_piped_data() const {

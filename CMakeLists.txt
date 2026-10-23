@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.14)
 project(gemini_cli CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
+
+add_compile_options(-Wall -Wextra)
 
 # 1. Declare the target first
 add_executable(gemini_cli src/main.cpp)
