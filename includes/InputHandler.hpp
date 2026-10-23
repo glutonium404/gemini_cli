@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FlagHandler.hpp"
+#include "PromptInstructions.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -15,7 +16,7 @@ class InputHandler {
 public:
     struct ParsedInput {
         std::string prompt;
-        std::vector<std::string> instructions;
+        std::vector<std::string_view> instructions;
     };
 public:
     InputHandler() {
@@ -32,34 +33,27 @@ public:
         if(piped_data_cache.empty())
             assert_prompt(args.empty());
 
-        std::string prompt = "USER QUERY:\n\n";
-        std::vector<std::string> instructions;
+        ParsedInput pi;
+
+        pi.prompt = "USER QUERY:\n\n";
 
         for(std::string_view arg : args) {
-            prompt += arg;
-            prompt += " ";
+            pi.prompt += arg;
+            pi.prompt += " ";
         }
 
-        prompt += "\n\n";
+        pi.prompt += "\n\n";
 
-        if(!flags.long_res) instructions.push_back(inst_short_res)   ;
-        if(!flags.markdown) instructions.push_back(inst_plain_format);
-        if( flags.ansii)    instructions.push_back(inst_ansii);
+        if(!flags.long_res) pi.instructions.push_back(Instructions::short_res);
+        if(!flags.markdown) pi.instructions.push_back(Instructions::plain_format);
+        if( flags.ansii)    pi.instructions.push_back(Instructions::ansii);
 
-        return {
-            .prompt       = prompt + get_piped_data(true),
-            .instructions = instructions
-        };
+        pi.prompt += get_piped_data(true);
+        return pi;
     }
 
 private:
     std::string piped_data_cache = "";
-
-    std::string inst_short_res = "keep the ans short and concise withing 15 to 20 lines if possible, write more if needed.";
-
-    std::string inst_plain_format = "i am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text. you are allowed to use nerd fonts to beautify";
-
-    std::string inst_ansii = "i am on terminal. so you can use ansii escape codes to color and format texts. so do use that";
 
     inline void assert_prompt(bool is_empty) const {
         if(is_empty) {

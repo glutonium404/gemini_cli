@@ -66,7 +66,7 @@ public:
     std::string generate_request_body(const InputHandler::ParsedInput& parsed_input) {
         nlohmann::json instruction_parts = nlohmann::json::array();
 
-        for(const std::string& instruction : parsed_input.instructions) {
+        for(std::string_view instruction : parsed_input.instructions) {
             instruction_parts.push_back({
                 {"text", instruction}
             });
