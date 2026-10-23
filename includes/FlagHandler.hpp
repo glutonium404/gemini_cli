@@ -2,9 +2,11 @@
 
 #include <algorithm>
 #include <charconv>
+#include <initializer_list>
 #include <iostream>
 #include <string_view>
 #include <vector>
+#include <array>
 
 struct Flags {
     /** @brief Allow long response */
@@ -19,48 +21,46 @@ struct Flags {
     bool verbose  = false;
     /** @brief Network request timeout per model in seconds. `5s <= timeout <= 60s` */
     int timeout   = 8;
-
+    /** @brief Network Custom model idk */
+    std::string_view custom_model_id;
 };
 
 class FlagHandler {
+private:
+    struct BoolFlagMapping {
+        std::initializer_list<std::string_view>  tokens;
+        bool& target;
+    };
+
 public:
     Flags parse_flags(std::vector<std::string_view>& args) {
         Flags flags;
 
         if(args.empty()) return flags;
 
+        std::array bool_flags{
+            BoolFlagMapping{{"-h", "--help"},      flags.help},
+            BoolFlagMapping{{"-l", "--long"},      flags.long_res},
+            BoolFlagMapping{{"-m", "--markdown"},  flags.markdown},
+            BoolFlagMapping{{"-a", "--ansii"},     flags.ansii},
+            BoolFlagMapping{{"-v", "--verbose"},   flags.verbose},
+        };
+
+        bool timeout_processed = false;
+
         for(auto it = args.begin(); it != args.end();) {
-            if(!flags.long_res && check_flag(*it, { "-l", "--long" })) {
-                flags.long_res = true;
+
+            auto item = std::ranges::find_if(bool_flags, [&](const BoolFlagMapping& bf) {
+                return !bf.target && check_flag(*it, bf.tokens);
+            });
+
+            if(item != bool_flags.end()) {
+                item->target = true;
                 it = args.erase(it);
                 continue;
             }
 
-            if(!flags.markdown && check_flag(*it, { "-m", "--markdown" })) {
-                flags.markdown = true;
-                it = args.erase(it);
-                continue;
-            }
-
-            if(!flags.ansii && check_flag((*it), { "-a", "--ansii" })) {
-                flags.ansii = true;
-                it = args.erase(it);
-                continue;
-            }
-
-            if(check_flag((*it), { "-h", "--help" })) {
-                flags.help = true;
-                it = args.erase(it);
-                continue;
-            }
-
-            if(check_flag((*it), { "-v", "--verbose" })) {
-                flags.verbose = true;
-                it = args.erase(it);
-                continue;
-            }
-
-            if(check_flag((*it), { "-t", "--timeout" })) {
+            if(!timeout_processed && check_flag((*it), { "-t", "--timeout" })) {
                 std::string_view val = get_flag_value(it, args, "-t|--timeout");
                 int t = 0;
 
@@ -72,6 +72,15 @@ public:
                 }
 
                 flags.timeout = t;
+                timeout_processed = true;
+
+                it = args.erase(it); // remove flag
+                it = args.erase(it); // remove value
+                continue;
+            }
+
+            if(flags.custom_model_id.empty() && check_flag(*it, {"--model"})) {
+                flags.custom_model_id = get_flag_value(it, args, {"--model"});
 
                 it = args.erase(it); // remove flag
                 it = args.erase(it); // remove value

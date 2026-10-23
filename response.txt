@@ -1,0 +1,34 @@
+[36m SHORT ANSWER: NO, IT IS NOT WORTH IT. [0m
+
+[33m ---------------------------------------------------- [0m
+
+1. A std::string_view is ALREADY a lightweight, immutable 
+   object (essentially a pointer + length).
+
+2. Marking it "const" (const std::string_view) is redundant.
+   It makes the view itself constant, not the data it 
+   points to. 
+
+3. Just like "const int", it adds no value because the
+   type is already passed by value. It just adds 
+   unnecessary verbosity to your code.
+
+4. Use "std::string_view" instead of "const std::string_view".
+
+5. Exception: If you need to ensure a variable is not 
+   reassigned to a different string later, then "const" 
+   might have a minor stylistic use, but rarely improves
+   performance or safety.
+
+[33m ---------------------------------------------------- [0m
+
+[32m RECOMMENDED USAGE: [0m
+
+void process_string(std::string_view sv) {
+    // Correct way: no 'const' needed here.
+    // The view is already an immutable reference to 
+    // the underlying buffer.
+}
+
+[31m AVOID: [0m
+void process_string(const std::string_view sv); // Redundant!

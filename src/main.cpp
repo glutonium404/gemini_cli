@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 #include "FlagHandler.hpp"
 #include "HTTPHandler.hpp"
@@ -58,7 +59,8 @@ inline void print_help() {
         << "  -m, --markdown  Enable markdown output (disable plain-text instruction)\n"
         << "  -a, --ansii     Enable ansii escape code for color and formatting on terminal\n"
         << "  -v, --verbose   Prints model names as it tries one after another\n"
-        << "  -t, --timeout   Network request timeout when requesting each models. (5 <= timeout <= 60)\n\n"
+        << "  -t, --timeout   Network request timeout when requesting each models. (5 <= timeout <= 60)\n"
+        << "  --model         Provide custom model id (e.g: gemini-3-flash-preview)\n\n"
         << "Notes:\n"
         << "  - Set GEMINI_API_KEY in your environment before running.\n"
         << "  - Piped stdin is added as context data to the prompt.\n";
