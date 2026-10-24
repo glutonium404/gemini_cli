@@ -1,5 +1,5 @@
-#include <array>
 #include <iostream>
+#include "ANSII.hpp"
 #include "FlagHandler.hpp"
 #include "HTTPHandler.hpp"
 #include "InputHandler.hpp"
@@ -31,7 +31,6 @@ int main(int argc, char* argv[]) {
     JSONHandler  json_handler;
     HTTPHandler  http_handler;
 
-
     ParsedInput parsed_input  = input_handler.parse_input(args, flags);
     string request_body       = json_handler.generate_request_body(parsed_input);
     optional<string> response = http_handler.send_post_request(request_body, flags);
@@ -42,6 +41,12 @@ int main(int argc, char* argv[]) {
     }
 
     string parsed_response = json_handler.parse_response_body(response.value());
+
+    if(flags.ansii) {
+        ANSII ansii;
+        parsed_response = ansii.parse_to_ansii(parsed_response);
+    }
+
     cout << parsed_response << endl;
 
     return 0;
