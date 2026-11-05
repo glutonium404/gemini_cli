@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build:
@@ -45,6 +46,8 @@ jobs:
       - name: Install deps (Windows, vcpkg)
         if: runner.os == 'Windows'
         shell: pwsh
+        env:
+          VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
         run: |
           vcpkg install openssl:x64-windows
 
@@ -52,8 +55,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          cmake -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
-          cmake --build build --config Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows
+          cmake --build build --config Release --parallel
 
       # ---------- Package ----------
       - name: Package (Linux)
