@@ -5,7 +5,9 @@
 namespace Instructions {
     inline constexpr std::string_view short_res = "keep the ans short and concise withing 15 to 20 lines if possible, write more if needed.";
 
-    inline constexpr std::string_view plain_format = "i am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text. you are allowed to use nerd fonts to beautify";
+    inline constexpr std::string_view nerd_icon = "User nerd font glyphs to beautify";
+
+    inline constexpr std::string_view plain_format = "i am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text.";
 
     inline constexpr std::string_view ansii =
         "Use only these markup tags for terminal formatting: "

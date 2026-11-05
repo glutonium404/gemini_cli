@@ -11,17 +11,19 @@
 
 struct Flags {
     /** @brief Allow long response */
-    bool long_res = false;
+    bool long_res  = false;
     /** @brief Allow markdown formatted response */
-    bool markdown = false;
+    bool markdown  = false;
     /** @brief Allow ansii escape code formatting */
-    bool ansii    = false;
+    bool ansii     = false;
     /** @brief Help flag */
-    bool help     = false;
+    bool help      = false;
     /** @brief Print additional information while prompting */
-    bool verbose  = false;
+    bool verbose   = false;
+    /** @brief Allow nerd icon when responding */
+    bool nerd_icon = false;
     /** @brief Network request timeout per model in seconds. `5s <= timeout <= 60s` */
-    int timeout   = 8;
+    int timeout    = 8;
     /** @brief Network Custom model idk */
     std::string_view custom_model_id;
 };
@@ -45,6 +47,7 @@ public:
             BoolFlagMapping{{"-m", "--markdown"},  flags.markdown},
             BoolFlagMapping{{"-a", "--ansii"},     flags.ansii},
             BoolFlagMapping{{"-v", "--verbose"},   flags.verbose},
+            BoolFlagMapping{{"--nerd-icon"},       flags.nerd_icon},
         };
 
         bool timeout_processed = false;

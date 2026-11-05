@@ -44,9 +44,10 @@ public:
 
         pi.prompt += "\n\n";
 
-        if(!flags.long_res) pi.instructions.push_back(Instructions::short_res);
-        if(!flags.markdown) pi.instructions.push_back(Instructions::plain_format);
-        if( flags.ansii)    pi.instructions.push_back(Instructions::ansii);
+        if(!flags.long_res)  pi.instructions.push_back(Instructions::short_res);
+        if(!flags.markdown)  pi.instructions.push_back(Instructions::plain_format);
+        if( flags.ansii)     pi.instructions.push_back(Instructions::ansii);
+        if( flags.nerd_icon) pi.instructions.push_back(Instructions::nerd_icon);
 
         pi.prompt += get_piped_data(true);
         return pi;
