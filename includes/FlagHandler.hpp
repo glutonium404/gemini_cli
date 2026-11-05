@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cstdlib>
 #include <initializer_list>
 #include <iostream>
 #include <string_view>
@@ -49,6 +50,13 @@ public:
         bool timeout_processed = false;
 
         for(auto it = args.begin(); it != args.end();) {
+
+            // "--" as a command line argument instructs that anything following it should treated as normal argument
+            // any flags following it will also be treated as an argument
+            if(*it == "--") {
+                it = args.erase(it);
+                return flags;
+            }
 
             auto item = std::ranges::find_if(bool_flags, [&](const BoolFlagMapping& bf) {
                 return !bf.target && check_flag(*it, bf.tokens);
