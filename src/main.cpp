@@ -1,5 +1,5 @@
 #include <iostream>
-#include "ANSII.hpp"
+#include "ANSI.hpp"
 #include "FlagHandler.hpp"
 #include "HTTPHandler.hpp"
 #include "InputHandler.hpp"
@@ -14,9 +14,9 @@ inline string test_string();
 
 int main(int argc, char* argv[]) {
 
-    // ANSII ansi;
+    // ANSI ansi;
     // auto str = test_string();
-    // cout << ansi.parse_to_ansii(str) << endl;
+    // cout << ansi.parse_to_ansi(str) << endl;
     // return 0;
 
     vector<std::string_view> args;
@@ -49,9 +49,9 @@ int main(int argc, char* argv[]) {
 
     string parsed_response = json_handler.parse_response_body(response.value());
 
-    if(flags.ansii) {
-        ANSII ansii;
-        parsed_response = ansii.parse_to_ansii(parsed_response);
+    if(flags.ansi) {
+        ANSI ansi;
+        parsed_response = ansi.parse_to_ansi(parsed_response);
     }
 
     cout << parsed_response << endl;
@@ -66,20 +66,25 @@ inline void print_help() {
         << "Usage:\n"
         << "  gemini_cli [options] <prompt>\n"
         << "  echo \"context\" | gemini_cli [options] <prompt>\n\n"
-        << "  e.g: cat file.txt | gemini_cli \"summarise this for me\"\n\n"
+        << "Example:\n"
+        << "  gemini_cli --ansi \"how to use ffmpeg to compress an mp4 file without losing a lot of quality\"\n\n"
+        << "  cat file.txt | gemini_cli \"summarise this\"\n\n"
         << "Options:\n"
         << "  -h, --help          Show this help message and exit\n"
         << "  -l, --long          Allow longer responses (disable short response instruction)\n"
         << "  -m, --markdown      Enable markdown output (disable plain-text instruction)\n"
-        << "  -a, --ansii         Enable ansii escape code for color and formatting on terminal\n"
+        << "  -a, --ansi          Enable ansi escape code for color and formatting on terminal\n"
         << "  -v, --verbose       Prints model names as it tries one after another\n"
         << "  -t, --timeout       Network request timeout when requesting each models. (5 <= timeout <= 60)\n"
-        << "  --nerd-icon         Use nerd font glyphs when in the response\n"
+        << "  --nerd-icon         Use nerd font glyphs in the response\n"
         << "  --model <model-id>  Provide custom model id (e.g: gemini-3-flash-preview)\n"
         << "  -- ...arg           Instructs the application to treat any following argument(s) as plain argument(s).\n"
-        << "                      Any flag that follows this will also be treated as a normal argument\n\n"
+        << "                      Any flag that follows this (--) will also be treated as a normal argument\n\n"
         << "Notes:\n"
         << "  - Set GEMINI_API_KEY in your environment before running.\n"
+        << "  - Set GEMINI_CLI_MODELS in your environment for default model selection or use --model <id> everytime.\n"
+        << "    - In case of multiple model ids, they should be colon(:) separated. E.g: GEMINI_CLI_MODELS=\"model1:model2:model3\"\n"
+        << "    - The program will go through each model until a HTTP OK(200) is returned.\n"
         << "  - Piped stdin is added as context data to the prompt.\n";
 }
 

@@ -14,8 +14,8 @@ struct Flags {
     bool long_res  = false;
     /** @brief Allow markdown formatted response */
     bool markdown  = false;
-    /** @brief Allow ansii escape code formatting */
-    bool ansii     = false;
+    /** @brief Allow ansi escape code formatting */
+    bool ansi      = false;
     /** @brief Help flag */
     bool help      = false;
     /** @brief Print additional information while prompting */
@@ -45,7 +45,7 @@ public:
             BoolFlagMapping{{"-h", "--help"},      flags.help},
             BoolFlagMapping{{"-l", "--long"},      flags.long_res},
             BoolFlagMapping{{"-m", "--markdown"},  flags.markdown},
-            BoolFlagMapping{{"-a", "--ansii"},     flags.ansii},
+            BoolFlagMapping{{"-a", "--ansi"},      flags.ansi},
             BoolFlagMapping{{"-v", "--verbose"},   flags.verbose},
             BoolFlagMapping{{"--nerd-icon"},       flags.nerd_icon},
         };

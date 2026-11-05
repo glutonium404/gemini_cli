@@ -20,7 +20,7 @@ public:
     };
 public:
     InputHandler() {
-        if(is_piped_data()) { // if no piped data then some soft of argument must be provided
+        if(is_piped_data()) { // if no piped data then some sort of argument must be provided
             std::string line;
             while (std::getline(std::cin, line)) {
                 piped_data_cache += line + "\n";
@@ -46,7 +46,7 @@ public:
 
         if(!flags.long_res)  pi.instructions.push_back(Instructions::short_res);
         if(!flags.markdown)  pi.instructions.push_back(Instructions::plain_format);
-        if( flags.ansii)     pi.instructions.push_back(Instructions::ansii);
+        if( flags.ansi)      pi.instructions.push_back(Instructions::ansi);
         if( flags.nerd_icon) pi.instructions.push_back(Instructions::nerd_icon);
 
         pi.prompt += get_piped_data(true);

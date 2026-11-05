@@ -9,7 +9,7 @@ namespace Instructions {
 
     inline constexpr std::string_view plain_format = "i am on terminal which can not render markdown. so i want you to write the response in plain text. and format or beautify using plain text.";
 
-    inline constexpr std::string_view ansii =
+    inline constexpr std::string_view ansi =
         "Use only these markup tags for terminal formatting: "
 
         // Opening tags

@@ -4,9 +4,9 @@
 #include <string>
 #include <unordered_map>
 
-class ANSII {
+class ANSI {
 public:
-    std::string parse_to_ansii(const std::string& str) const {
+    std::string parse_to_ansi(const std::string& str) const {
         std::string res;
         size_t i = 0;
 
