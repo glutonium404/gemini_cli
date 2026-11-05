@@ -2,15 +2,10 @@
 
 #include "FlagHandler.hpp"
 #include "PromptInstructions.hpp"
+#include "Utils.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
-
-#if defined(_WIN32)
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
 
 class InputHandler {
 public:
@@ -20,7 +15,7 @@ public:
     };
 public:
     InputHandler() {
-        if(is_piped_data()) { // if no piped data then some sort of argument must be provided
+        if(IS_PIPED_DATA(stdin)) { // if no piped data then some sort of argument must be provided
             std::string line;
             while (std::getline(std::cin, line)) {
                 piped_data_cache += line + "\n";
@@ -68,13 +63,5 @@ private:
         if (format)
             return "CONTEXT DATA:\n```\n" + piped_data_cache + "\n```";
         return piped_data_cache;
-    }
-
-    bool is_piped_data() const {
-#if defined(_WIN32)
-        return _isatty(_fileno(stdin)) == 0;
-#else
-        return isatty(fileno(stdin)) == 0;
-#endif
     }
 };
