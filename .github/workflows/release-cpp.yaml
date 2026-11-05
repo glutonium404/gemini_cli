@@ -1,21 +1,18 @@
 name: Release C++ CLI (Linux & Windows)
 
-# Triggers on tags like "cpp-v1.0.0". Using a distinct "cpp-v*" prefix
-# (instead of plain "v*") keeps this from colliding with the existing
-# main.yml workflow, which also triggers on tag pushes. The
-# "verify-branch" job below additionally makes sure the tag actually
-# points at a commit on cpp_migration before anything gets built.
+# Triggers on version tags like "v2.0.0". The "verify-branch" job makes
+# sure the tag points at a commit on main before anything gets built.
 on:
   push:
     tags:
-      - 'cpp-v*'
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
   verify-branch:
-    name: Verify tag is on cpp_migration
+    name: Verify tag is on main
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history)
@@ -23,13 +20,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Confirm this commit is on origin/cpp_migration
+      - name: Confirm this commit is on origin/main
         run: |
-          if ! git branch -r --contains "${{ github.sha }}" | grep -q 'origin/cpp_migration'; then
-            echo "::error::Tag ${{ github.ref_name }} does not point at a commit on cpp_migration. Aborting release."
+          if ! git branch -r --contains "${{ github.sha }}" | grep -qE '^\s*origin/main$'; then
+            echo "::error::Tag ${{ github.ref_name }} does not point at a commit on main. Aborting release."
             exit 1
           fi
-          echo "OK: tag is on cpp_migration"
+          echo "OK: tag is on main"
 
   build:
     name: Build (${{ matrix.os }})
