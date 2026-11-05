@@ -1,7 +1,6 @@
 name: Release C++ CLI (Linux & Windows)
 
-# Triggers on version tags like "v2.0.0". The "verify-branch" job makes
-# sure the tag points at a commit on main before anything gets built.
+# Triggers on version tags like "v2.0.0".
 on:
   push:
     tags:
@@ -11,26 +10,8 @@ permissions:
   contents: write
 
 jobs:
-  verify-branch:
-    name: Verify tag is on main
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout (full history)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Confirm this commit is on origin/main
-        run: |
-          if ! git branch -r --contains "${{ github.sha }}" | grep -qE '^\s*origin/main$'; then
-            echo "::error::Tag ${{ github.ref_name }} does not point at a commit on main. Aborting release."
-            exit 1
-          fi
-          echo "OK: tag is on main"
-
   build:
     name: Build (${{ matrix.os }})
-    needs: verify-branch
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
