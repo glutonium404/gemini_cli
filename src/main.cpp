@@ -10,9 +10,6 @@ typedef InputHandler::ParsedInput ParsedInput;
 
 using namespace std;
 
-inline void print_help();
-inline string test_string();
-
 int main(int argc, char* argv[]) {
 
     // ANSI ansi;
