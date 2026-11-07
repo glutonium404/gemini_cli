@@ -20,6 +20,8 @@ target_link_libraries(gemini_cli PRIVATE Threads::Threads OpenSSL::SSL OpenSSL::
 # 3. Compiler-specific options
 if(MSVC)
   target_compile_options(gemini_cli PRIVATE /W4 /utf-8)
+elseif(MINGW)
+  target_compile_options(gemini_cli PRIVATE -Wall -Wextra -Wa,-mbig-obj)
 else()
   target_compile_options(gemini_cli PRIVATE -Wall -Wextra)
 endif()
