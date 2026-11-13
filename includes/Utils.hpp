@@ -55,6 +55,7 @@ inline void print_help() {
         << "  -a, --ansi          Enable ansi escape code for color and formatting on terminal\n"
         << "  -v, --verbose       Prints model names as it tries one after another\n"
         << "  -t, --timeout       Network request timeout when requesting each models. (5 <= timeout <= 60)\n"
+        << "  -q, --quiet         Suppress intermediate errors. Eg: while trying multiple models\n"
         << "  --nerd-icon         Use nerd font glyphs in the response\n"
         << "  --model <model-id>  Provide custom model id (e.g: gemini-3-flash-preview)\n"
         << "  -- ...arg           Instructs the application to treat any following argument(s) as plain argument(s).\n"

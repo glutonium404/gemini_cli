@@ -13,6 +13,8 @@ struct Flags {
     bool help      = false;
     /** @brief Print additional information while prompting */
     bool verbose   = false;
+    /** @brief Suppress intermediate errors. Eg: while trying multiple models */
+    bool quiet     = false;
     /** @brief Allow nerd icon when responding */
     bool nerd_icon = false;
     /** @brief Network request timeout per model in seconds. `5s <= timeout <= 60s` */

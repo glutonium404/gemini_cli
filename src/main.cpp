@@ -14,11 +14,6 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     try {
-        // ANSI ansi;
-        // auto str = Utils::test_string();
-        // cout << ansi.parse_to_ansi(str) << endl;
-        // return 0;
-
         vector<std::string_view> args;
         args.reserve(argc);
 
@@ -55,6 +50,7 @@ int main(int argc, char* argv[]) {
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "[Error] : " << e.what() << '\n';
+
         return EXIT_FAILURE;
     }
 }

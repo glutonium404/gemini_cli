@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FlagHandler.hpp"
+#include "Flags.hpp"
 #include "PromptInstructions.hpp"
 #include "Utils.hpp"
 #include <iostream>
