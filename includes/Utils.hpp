@@ -38,6 +38,14 @@ inline void throw_if(bool condition, std::string_view message) {
         throw std::runtime_error(std::string(message));
 }
 
+inline void log_error(std::string_view err) {
+    std::cerr << "[GEMINI_CLI] [ERROR] : "<< err << '\n';
+}
+
+inline void log_info(std::string_view info) {
+    std::cout << "[GEMINI_CLI] [INFO] : " << info << '\n';
+}
+
 inline void print_help() {
     std::cout
         << ">>> GEMINI CLI <<<\n\n"

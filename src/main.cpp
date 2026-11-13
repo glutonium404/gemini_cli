@@ -1,14 +1,14 @@
 #include <cstdlib>
-#include <iostream>
+#include <stdexcept>
 #include "ANSI.hpp"
 #include "EnvConfig.hpp"
 #include "FlagHandler.hpp"
+#include "AppState.hpp"
 #include "HTTPHandler.hpp"
-#include "InputHandler.hpp"
+#include "PromptBuilder.hpp"
 #include "JSONHandler.hpp"
+#include "PayLoad.hpp"
 #include "Utils.hpp"
-
-typedef InputHandler::ParsedInput ParsedInput;
 
 using namespace std;
 
@@ -29,27 +29,55 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        EnvConfig    env_config{ flags.model };
-        InputHandler input_handler;
-        JSONHandler  json_handler;
-        HTTPHandler  http_handler{ env_config };
+        EnvConfig env_config{ flags.model };
+        AppState  app_state{ env_config, flags };
 
-        ParsedInput parsed_input  = input_handler.parse_input(args, flags);
-        string request_body       = json_handler.generate_request_body(parsed_input);
-        std::string response      = http_handler.send_post_request(request_body, flags);
+        PromptBuilder prompt_builder;
+        JSONHandler   json_handler;
+        HTTPHandler   http_handler{ env_config, flags.timeout };
 
-        string parsed_response = json_handler.parse_response_body(response);
+        prompt_builder.build_prompt(args, flags, app_state.prompt, app_state.sys_instruction);
 
-        if(flags.ansi) {
-            ANSI ansi;
-            parsed_response = ansi.parse_to_ansi(parsed_response);
+        for(const auto& model : app_state.models()) {
+            Payload payload = {
+                .model              = model,
+                .input              = app_state.prompt,
+                .system_instruction = app_state.sys_instruction,
+                .stream             = false,
+                .store              = false,
+            };
+
+            if(flags.verbose) {
+                Utils::log_info("Trying : " + payload.model);
+            }
+
+            string request_body     = json_handler.generate_req_body(payload);
+            GeminiResponse response = http_handler.send_req(request_body);
+
+            if(!response.success) {
+                if(!flags.quiet) {
+                    Utils::log_error(response.err);
+                }
+
+                continue;
+            }
+
+            string parsed_response = json_handler.parse_response_body(response.body);
+
+            if(flags.ansi) {
+                ANSI ansi;
+                parsed_response = ansi.parse_to_ansi(parsed_response);
+            }
+
+            cout << parsed_response << endl;
+
+            return EXIT_SUCCESS;
         }
 
-        cout << parsed_response << endl;
+        throw runtime_error("All network attempts were unsuccessful");
 
-        return 0;
     } catch(const std::exception& e) {
-        std::cerr << "[Error] : " << e.what() << '\n';
+        Utils::log_error(e.what());
 
         return EXIT_FAILURE;
     }

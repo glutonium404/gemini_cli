@@ -7,14 +7,9 @@
 #include <string>
 #include <vector>
 
-class InputHandler {
+class PromptBuilder {
 public:
-    struct ParsedInput {
-        std::string prompt;
-        std::vector<std::string_view> instructions;
-    };
-public:
-    InputHandler() {
+    PromptBuilder() {
         if(IS_PIPED_DATA(stdin)) { // if no piped data then some sort of argument must be provided
             std::string line;
             while (std::getline(std::cin, line)) {
@@ -23,29 +18,31 @@ public:
         }
     }
 
-    ParsedInput parse_input(const std::vector<std::string_view>& args, const Flags& flags) const {
+    void build_prompt(
+        const std::vector<std::string_view>& args,
+        const Flags& flags,
+        std::string& prompt,
+        std::string& sys_instruction
+    ) const {
 
         if(piped_data_cache.empty())
             validate_prompt(args.empty());
 
-        ParsedInput pi;
-
-        pi.prompt = "USER QUERY:\n\n";
+        prompt = "USER QUERY:\n\n";
 
         for(std::string_view arg : args) {
-            pi.prompt += arg;
-            pi.prompt += " ";
+            prompt += arg;
+            prompt += " ";
         }
 
-        pi.prompt += "\n\n";
+        prompt += "\n\n";
 
-        if(!flags.long_res)  pi.instructions.push_back(Instructions::short_res);
-        if(!flags.markdown)  pi.instructions.push_back(Instructions::plain_format);
-        if( flags.ansi)      pi.instructions.push_back(Instructions::ansi);
-        if( flags.nerd_icon) pi.instructions.push_back(Instructions::nerd_icon);
+        if(!flags.long_res)  sys_instruction.append(Instructions::short_res).append("\n");
+        if(!flags.markdown)  sys_instruction.append(Instructions::plain_format).append("\n");
+        if( flags.ansi)      sys_instruction.append(Instructions::ansi).append("\n");
+        if( flags.nerd_icon) sys_instruction.append(Instructions::nerd_icon);
 
-        pi.prompt += get_piped_data(true);
-        return pi;
+        prompt += get_piped_data(true);
     }
 
 private:

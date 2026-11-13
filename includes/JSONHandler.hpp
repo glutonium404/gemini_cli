@@ -1,8 +1,8 @@
 #pragma once
 
-#include "InputHandler.hpp"
+#include "PayLoad.hpp"
+#include "Utils.hpp"
 #include "json.hpp"
-#include <initializer_list>
 #include <stdexcept>
 #include <string>
 
@@ -11,84 +11,76 @@ public:
     /**
      *
      * {
-     *  "candidates": [
-     *    {
-     *      "content": {
-     *        "parts": [
-     *          {
-     *            "text": "Generated response string"
-     *          }
-     *        ]
-     *      }
-     *    }
-     *  ]
+     *     "steps": [
+     *         {
+     *             "type": "model_output",
+     *             "content": [
+     *                 {
+     *                     "type": "text",
+     *                     "text": "text"
+     *                 }
+     *             ]
+     *         }
+     *     ]
      * }
      */
     std::string parse_response_body(const std::string& res_body) {
-        std::string response = "";
-
         try {
-            nlohmann::json response_json = nlohmann::json::parse(res_body);
-            response = response_json
-                .at("candidates")
-                .at(0)
-                .at("content")
-                .at("parts")
-                .at(0)
-                .at("text");
+            const auto response_json = nlohmann::json::parse(res_body);
+            const auto& steps = response_json.at("steps");
+
+            Utils::throw_if(!steps.is_array(), "Response field 'steps' is not an array.");
+
+            std::string response = "";
+
+            for(const auto& step : steps) {
+                if(step.value("type", "") != "model_output") {
+                    continue;
+                }
+
+                const auto& content = step.at("content");
+
+                Utils::throw_if(
+                    !content.is_array(),
+                    "Model_output 'content' is not an array"
+                );
+
+                for(const auto& item : content) {
+                    if(item.value("type", "") == "text" && item.contains("text") && item.at("text").is_string()) {
+                        response += item.at("text").get<std::string>();
+                    }
+                }
+            }
+
+            Utils::throw_if(response.empty(), "No text output found in response");
+
+            return response;
 
         } catch (const std::exception& e) {
-            throw std::runtime_error(std::string("JSON Parsing error: ") + e.what());
+            throw std::runtime_error(std::string("Error while parsing response body\n") + e.what());
         }
-
-        return response;
     }
 
     /**
-    * {
-    *   "system_instruction": {
-    *     "parts": [
-    *       {
-    *         "text": instruction
-    *       }
-    *     ]
-    *   },
-    *   "contents": [
-    *     {
-    *       "parts": [
-    *         {
-    *           "text": prompt
-    *         }
-    *       ]
-    *     }
-    *   ]
-    * }
-    */
-    std::string generate_request_body(const InputHandler::ParsedInput& parsed_input) {
-        nlohmann::json instruction_parts = nlohmann::json::array();
-
-        for(std::string_view instruction : parsed_input.instructions) {
-            instruction_parts.push_back({
-                {"text", instruction}
-            });
-        }
-
-        nlohmann::json payload = {
-            {"system_instruction", {
-                {"parts", instruction_parts}
-            }},
-            {"contents", nlohmann::json::array({
-                {
-                    {"parts", nlohmann::json::array({
-                        {
-                            {"text", parsed_input.prompt}
-                        }
-                    })}
-                }
-            })}
+     *
+     * {
+     *     "model": "$model",
+     *     "input": "$input",
+     *     "system_instruction": "$systemins",
+     *     "stream": false,
+     *     "store": false
+     * }
+     */
+    std::string generate_req_body(const Payload& payload) {
+        nlohmann::json json = {
+            {"model",              payload.model},
+            {"input",              payload.input},
+            {"system_instruction", payload.system_instruction},
+            {"stream",             payload.stream},
+            {"store",              payload.store}
         };
 
-        return payload.dump();
+        return json.dump();
     }
 };
 
