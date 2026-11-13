@@ -1,7 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 
 #if defined(_WIN32)
 #include <io.h>
@@ -11,6 +13,30 @@
 #define IS_PIPED_DATA(stdin) (isatty(fileno(stdin)) == 0)
 #endif
 
+#ifndef NDEBUG
+    // Debug: Macro executes logic
+    #define debug(x) std::cout << #x << " : " << x << std::endl
+#else
+    // Release: Macro expands to nothing
+    #define debug(x)
+#endif
+
+
+namespace Utils {
+/**
+ * Throws a runtime error if the condition is met.
+ *
+ * @param {boolean} condition - The trigger to throw.
+ * @param {string} message - The error description.
+ *
+ * @throws {std::runtime_error} When condition is true.
+ * @example
+ *   throw_if(ptr == nullptr, "Null pointer detected");
+ */
+inline void throw_if(bool condition, std::string_view message) {
+    if(condition)
+        throw std::runtime_error(std::string(message));
+}
 
 inline void print_help() {
     std::cout
@@ -96,4 +122,5 @@ inline std::string test_string() {
     "}"
     "<%/codeblock%>\n\n"
     "<%muted%>Some other not so important muted/gray info<%/muted%>\n";
+}
 }

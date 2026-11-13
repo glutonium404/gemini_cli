@@ -1,32 +1,13 @@
 #pragma once
 
+#include "Utils.hpp"
+#include "Flags.hpp"
 #include <algorithm>
 #include <charconv>
-#include <cstdlib>
 #include <initializer_list>
-#include <iostream>
 #include <string_view>
 #include <vector>
 #include <array>
-
-struct Flags {
-    /** @brief Allow long response */
-    bool long_res  = false;
-    /** @brief Allow markdown formatted response */
-    bool markdown  = false;
-    /** @brief Allow ansi escape code formatting */
-    bool ansi      = false;
-    /** @brief Help flag */
-    bool help      = false;
-    /** @brief Print additional information while prompting */
-    bool verbose   = false;
-    /** @brief Allow nerd icon when responding */
-    bool nerd_icon = false;
-    /** @brief Network request timeout per model in seconds. `5s <= timeout <= 60s` */
-    int timeout    = 8;
-    /** @brief Network Custom model idk */
-    std::string_view custom_model_id;
-};
 
 class FlagHandler {
 private:
@@ -75,12 +56,14 @@ public:
                 std::string_view val = get_flag_value(it, args, "-t|--timeout");
                 int t = 0;
 
+
+                // convert the flag value to an int and store in 't'
                 auto [ptr, ec] = std::from_chars(val.data(), val.data() + val.size(), t);
 
-                if(ec != std::errc() || ptr != (val.data() + val.size()) || t < 5 || t > 60) {
-                    std::cerr << "Invalid value: -t|--timeout can only accept integers within (5, 60) inclusive" << std::endl;
-                    std::exit(1);
-                }
+                Utils::throw_if(
+                    ec != std::errc() || ptr != (val.data() + val.size()) || t < 5 || t > 60,
+                    "Invalid value: -t|--timeout can only accept integers within (5, 60) inclusive"
+                );
 
                 flags.timeout = t;
                 timeout_processed = true;
@@ -90,8 +73,8 @@ public:
                 continue;
             }
 
-            if(flags.custom_model_id.empty() && check_flag(*it, {"--model"})) {
-                flags.custom_model_id = get_flag_value(it, args, {"--model"});
+            if(flags.model.empty() && check_flag(*it, {"--model"})) {
+                flags.model = get_flag_value(it, args, {"--model"});
 
                 it = args.erase(it); // remove flag
                 it = args.erase(it); // remove value
@@ -110,10 +93,10 @@ private:
     }
 
     inline std::string_view get_flag_value(auto& it, const std::vector<std::string_view>& args, std::string_view flag_name) {
-        if(it + 1 == args.end()) {
-            std::cerr << "[" << flag_name << "]" << " flag was used but no value was provided.\nUse [-h|--help]" << std::endl;
-            std::exit(1);
-        }
+        Utils::throw_if(
+            it + 1 == args.end(),
+            "[" + std::string(flag_name) + "]" + " flag was used but no value was provided.\nUse [-h|--help]"
+        );
 
         return *(it+1);
     }

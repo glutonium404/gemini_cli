@@ -26,7 +26,7 @@ public:
     ParsedInput parse_input(const std::vector<std::string_view>& args, const Flags& flags) const {
 
         if(piped_data_cache.empty())
-            assert_prompt(args.empty());
+            validate_prompt(args.empty());
 
         ParsedInput pi;
 
@@ -51,11 +51,8 @@ public:
 private:
     std::string piped_data_cache = "";
 
-    inline void assert_prompt(bool is_empty) const {
-        if(is_empty) {
-            std::cerr << "Prompt not provided." << std::endl;
-            exit(-1);
-        }
+    inline void validate_prompt(bool is_empty) const {
+        Utils::throw_if(is_empty, "Prompt not provided.");
     }
 
     std::string get_piped_data(bool format = false) const {

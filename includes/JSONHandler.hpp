@@ -3,7 +3,8 @@
 #include "InputHandler.hpp"
 #include "json.hpp"
 #include <initializer_list>
-#include <iostream>
+#include <stdexcept>
+#include <string>
 
 class JSONHandler {
 public:
@@ -37,7 +38,7 @@ public:
                 .at("text");
 
         } catch (const std::exception& e) {
-            std::cerr << "JSON Parsing error: " << e.what() << std::endl;
+            throw std::runtime_error(std::string("JSON Parsing error: ") + e.what());
         }
 
         return response;
