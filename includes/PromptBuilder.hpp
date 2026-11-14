@@ -37,10 +37,11 @@ public:
 
         prompt += "\n\n";
 
-        if(!flags.long_res)  sys_instruction.append(Instructions::short_res).append("\n");
-        if(!flags.markdown)  sys_instruction.append(Instructions::plain_format).append("\n");
-        if( flags.ansi)      sys_instruction.append(Instructions::ansi).append("\n");
-        if( flags.nerd_icon) sys_instruction.append(Instructions::nerd_icon);
+        if(!flags.long_res)              sys_instruction.append(Instructions::create(Instructions::short_res));
+        if(!flags.markdown)              sys_instruction.append(Instructions::create(Instructions::plain_format));
+        // currently ANSI not supported with streamed response
+        if( flags.ansi && !flags.stream) sys_instruction.append(Instructions::create(Instructions::ansi));
+        if( flags.nerd_icon)             sys_instruction.append(Instructions::create(Instructions::nerd_icon));
 
         prompt += get_piped_data(true);
     }

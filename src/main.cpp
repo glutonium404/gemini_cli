@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
                 .model              = model,
                 .input              = app_state.prompt,
                 .system_instruction = app_state.sys_instruction,
-                .stream             = false,
+                .stream             = flags.stream,
                 .store              = false,
             };
 
@@ -51,8 +51,14 @@ int main(int argc, char* argv[]) {
                 Utils::log_info("Trying : " + payload.model);
             }
 
-            string request_body     = json_handler.generate_req_body(payload);
-            GeminiResponse response = http_handler.send_req(request_body);
+            string request_body = json_handler.generate_req_body(payload);
+            GeminiResponse response;
+
+            if(payload.stream) {
+                response = http_handler.get_streamed_res(request_body);
+            }else {
+                response = http_handler.get_res(request_body);
+            }
 
             if(!response.success) {
                 if(!flags.quiet) {
@@ -60,6 +66,10 @@ int main(int argc, char* argv[]) {
                 }
 
                 continue;
+            }
+
+            if(flags.stream) {
+                break;
             }
 
             string parsed_response = json_handler.parse_response_body(response.body);

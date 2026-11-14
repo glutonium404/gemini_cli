@@ -1,8 +1,14 @@
 #pragma once
 
 #include <string_view>
+#include <string>
 
 namespace Instructions {
+    inline std::string create(std::string_view instruction) {
+        static int count = 1;
+        return "INSTRUCTION: " + std::to_string(count++) + "\n" + std::string(instruction) + "\n\n";
+    }
+
     inline constexpr std::string_view short_res = "keep the ans short and concise withing 15 to 20 lines if possible, write more if needed.";
 
     inline constexpr std::string_view nerd_icon = "User nerd font glyphs to beautify";

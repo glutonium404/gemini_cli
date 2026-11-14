@@ -17,6 +17,8 @@ struct Flags {
     bool quiet     = false;
     /** @brief Allow nerd icon when responding */
     bool nerd_icon = false;
+    /** @brief Stream the output */
+    bool stream    = false;
     /** @brief Network request timeout per model in seconds. `5s <= timeout <= 60s` */
     int timeout    = 8;
     /** @brief Network Custom model idk */

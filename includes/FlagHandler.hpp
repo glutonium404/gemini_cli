@@ -29,6 +29,7 @@ public:
             BoolFlagMapping{{"-a", "--ansi"},      flags.ansi},
             BoolFlagMapping{{"-v", "--verbose"},   flags.verbose},
             BoolFlagMapping{{"-q", "--quiet"},     flags.quiet},
+            BoolFlagMapping{{"--stream"},          flags.stream},
             BoolFlagMapping{{"--nerd-icon"},       flags.nerd_icon},
         };
 
