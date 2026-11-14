@@ -7,6 +7,7 @@
 #include "HTTPHandler.hpp"
 #include "PromptBuilder.hpp"
 #include "JSONHandler.hpp"
+#include "SseHandler.hpp"
 #include "Utils.hpp"
 
 using namespace std;
@@ -23,6 +24,7 @@ int main(int argc, char* argv[]) {
         FlagHandler flag_handler;
         Flags flags = flag_handler.parse_flags(args);
 
+        // if no piped data AND no argumets or help flag, print help
         if((!IS_PIPED_DATA(stdin) && args.empty()) || flags.help) {
             Utils::print_help();
             return 0;
@@ -54,7 +56,24 @@ int main(int argc, char* argv[]) {
             GeminiResponse response;
 
             if(payload.stream) {
-                response = http_handler.get_streamed_res(request_body);
+                SseHandler sse_handler{
+                    [&](const SseEvent& event) {
+                        if (event.event != "step.delta") {
+                            return;
+                        }
+
+                        auto json = nlohmann::json::parse(event.data);
+                        const auto& delta = json.at("delta");
+
+                        if (delta.value("type", "") == "text") {
+                            std::cout << delta.value("text", "") << std::flush;
+                        }
+                    }
+                };
+
+                response = http_handler.get_streamed_res(request_body, [&](std::string_view chunk) {
+                    return sse_handler.feed(chunk);
+                });
             }else {
                 response = http_handler.get_res(request_body);
             }
@@ -68,7 +87,8 @@ int main(int argc, char* argv[]) {
             }
 
             if(flags.stream) {
-                break;
+                std::cout << '\n';
+                return EXIT_SUCCESS;
             }
 
             string parsed_response = json_handler.parse_response_body(response.body);
