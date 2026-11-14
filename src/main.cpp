@@ -7,7 +7,6 @@
 #include "HTTPHandler.hpp"
 #include "PromptBuilder.hpp"
 #include "JSONHandler.hpp"
-#include "PayLoad.hpp"
 #include "Utils.hpp"
 
 using namespace std;

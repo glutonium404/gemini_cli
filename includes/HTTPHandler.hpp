@@ -15,6 +15,14 @@ struct GeminiResponse {
     std::string err;
 };
 
+struct Payload {
+    std::string model;
+    std::string input;
+    std::string system_instruction;
+    bool stream = false;
+    bool store = true;
+};
+
 class HTTPHandler {
 private:
     httplib::SSLClient client = httplib::SSLClient("generativelanguage.googleapis.com");
